@@ -190,16 +190,21 @@ class TypedJsonMixin:
             return isinstance(actual_value, expected_type)
 
     @classmethod
-    def from_dict(cls, raw_dict, *, mapping_mode=MappingMode.NoMap):
+    def from_dict(cls, raw_dict, *, mapping_mode=MappingMode.NoMap, mapping=None):
         """Given a python dict, create an instance of the implementing class.
 
         :raw_dict: A dictionary that represents the DTO to create
         :mapping_mode: Format for properties
+        :mapping: A dictionary indicating custom mapping from DTO field to given keys
         :returns: Returns an instance of the DTO, instantiated via the dict
         """
 
         if not isinstance(mapping_mode, MappingMode):
             raise ValueError('Invalid mapping mode')
+
+        if mapping:
+            for original_key, new_key in mapping.items():
+                raw_dict[original_key] = raw_dict.pop(new_key)
 
         if mapping_mode == MappingMode.NoMap:
             return cls(**raw_dict)
@@ -210,21 +215,23 @@ class TypedJsonMixin:
         return cls(**mapped_dict)
 
     @classmethod
-    def from_json(cls, raw_json, *, mapping_mode=MappingMode.NoMap):
+    def from_json(cls, raw_json, *, mapping_mode=MappingMode.NoMap, mapping=None):
         """Given a raw json string, create an instance of the implementing class.
 
         :raw_json: A json string that represents the DTO to create
         :mapping_mode: Format for properties
+        :mapping: A dictionary indicating custom mapping from DTO field to given keys
         :returns: Returns an instance of the DTO, instantiated via the json
         """
 
         return cls.from_dict(json.loads(raw_json), mapping_mode=mapping_mode)
 
-    def to_dict(self, *, keep_none=False, mapping_mode=MappingMode.NoMap):
+    def to_dict(self, *, keep_none=False, mapping_mode=MappingMode.NoMap, mapping=None):
         """Express the DTO as a dictionary.
 
         :keep_none: Filter keys that are None
         :mapping_mode: Format for properties
+        :mapping: A dictionary indicating custom mapping from DTO field to given keys
         :returns: Returns the instantiated DTO as a dictionary
         """
         if not isinstance(mapping_mode, MappingMode):
@@ -239,6 +246,10 @@ class TypedJsonMixin:
             self_dict = {k: v for k, v in asdict(self).items()
                          if v is not None}
 
+        if mapping:
+            for original_key, new_key in mapping.items():
+                self_dict[new_key] = self_dict.pop(original_key)
+
         if mapping_mode == MappingMode.NoMap:
             return self_dict
 
@@ -247,11 +258,12 @@ class TypedJsonMixin:
         mapped_dict = recursive_rename(self_dict, format_method)
         return mapped_dict
 
-    def to_json(self, *, keep_none=False, mapping_mode=MappingMode.NoMap):
+    def to_json(self, *, keep_none=False, mapping_mode=MappingMode.NoMap, mapping=None):
         """Express the DTO as a json string.
 
         :keep_none: Filter keys that are None
         :mapping_mode: Format for properties
+        :mapping: A dictionary indicating custom mapping from DTO field to given keys
         :returns: Returns the instantiated DTO as a json string
         """
         return json.dumps(self.to_dict(
