@@ -2,3 +2,7 @@ codecov.xml
 .coverage
 coverage.xml
 htmlcov/
+
+.vscode
+__pycache__
+*.egg-info
