@@ -156,6 +156,32 @@ This mapping mode is useful for when you get requests that have the JSON in a
 camel case format, but you want your objects to be snake case and stay PEP8
 compliant.
 
+### Custom mapping (WIP)
+It's possible that the source of the data and the field names of the dataclass don't map directly. For example, after a refactoring, old source data can follow a different naming and changing the source might prove unpractical. Another case could be that you need to move between (human) languages.
+
+In this case, you can provide a custom dictionary to the mathods provided by the mixin class that maps the dataclass field names to the field names in the source.
+
+```python
+from dataclasses import dataclass
+from typed_json_dataclass import TypedJsonMixin, MappingMode
+
+@dataclass
+class Person(TypedJsonMixin):
+    name: str
+    age: int
+
+request_data_as_dict = {
+    'nombre': 'Alice',
+    'edad': 32
+}
+
+alice = Person.from_dict(request_data_as_dict, mapping={'name': 'nombre', 'age': 'edad'})
+# => Person(name='Alice', age=32)
+```
+
+It is not necessary that every field name is given, only those provided will be modified. Currently it doesn't work for recursively defined dataclasses and it does not do any kind of validation that the given dataclass fields exists or not.
+
+
 ## Changelog
 
 0.1.1 - Sun, 2018-12-30
